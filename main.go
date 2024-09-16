@@ -9,6 +9,7 @@ import (
 type StateMachine struct {
 	Initial string                 `json:"initial"`
 	States  map[string]StateConfig `json:"states"`
+	Guards  map[string]GuardImplementation
 }
 
 // StateConfig represents the configuration for each state
@@ -37,12 +38,33 @@ type Action struct {
 // Transition represents a transition between states
 type Transition struct {
 	Target  string   `json:"target"`
+	Guard   *Guard   `json:"guard,omitempty"`
 	Actions []Action `json:"actions,omitempty"`
+}
+
+// Guard represents a condition for a transition
+type Guard struct {
+	Type   string                 `json:"type"`
+	Params map[string]interface{} `json:"params,omitempty"`
+}
+
+// GuardImplementation is a function type for guard implementations
+type GuardImplementation func(params map[string]interface{}) bool
+
+// CreateMachine creates a new StateMachine with the given JSON and guard implementations
+func CreateMachine(machineJSON string, guards map[string]GuardImplementation) (*StateMachine, error) {
+	var machine StateMachine
+	err := json.Unmarshal([]byte(machineJSON), &machine)
+	if err != nil {
+		return nil, err
+	}
+	machine.Guards = guards
+	return &machine, nil
 }
 
 // TransitionStateMachine takes a state machine definition, current state, and event,
 // and returns the next state and actions to execute
-func TransitionStateMachine(machine StateMachine, currentState State, event Event) (State, []Action) {
+func (machine *StateMachine) TransitionStateMachine(currentState State, event Event) (State, []Action) {
 	stateConfig, exists := machine.States[currentState.Value]
 	if !exists {
 		return currentState, []Action{}
@@ -51,6 +73,13 @@ func TransitionStateMachine(machine StateMachine, currentState State, event Even
 	transition, exists := stateConfig.On[event.Type]
 	if !exists {
 		return currentState, []Action{}
+	}
+
+	if transition.Guard != nil {
+		guardImpl, exists := machine.Guards[transition.Guard.Type]
+		if !exists || !guardImpl(transition.Guard.Params) {
+			return currentState, []Action{}
+		}
 	}
 
 	nextState := State{Value: transition.Target}
@@ -74,6 +103,14 @@ func TransitionStateMachine(machine StateMachine, currentState State, event Even
 }
 
 func main() {
+	// Define guard implementations
+	guards := map[string]GuardImplementation{
+		"isValid": func(params map[string]interface{}) bool {
+			id, ok := params["someParam"].(string)
+			return ok && id == "accepted"
+		},
+	}
+
 	// Example usage
 	machineJSON := `{
 		"initial": "green",
@@ -82,6 +119,12 @@ func main() {
 				"on": {
 					"timer": {
 						"target": "yellow",
+						"guard": {
+							"type": "isValid",
+							"params": {
+								"someParam": "accepted"
+							}
+						},
 						"actions": [
 							{
 								"type": "logTransition",
@@ -148,17 +191,16 @@ func main() {
 		}
 	}`
 
-	var machine StateMachine
-	err := json.Unmarshal([]byte(machineJSON), &machine)
+	machine, err := CreateMachine(machineJSON, guards)
 	if err != nil {
-		fmt.Println("Error parsing JSON:", err)
+		fmt.Println("Error creating state machine:", err)
 		return
 	}
 
 	currentState := State{Value: "green"}
 	event := Event{Type: "timer"}
 
-	nextState, actions := TransitionStateMachine(machine, currentState, event)
+	nextState, actions := machine.TransitionStateMachine(currentState, event)
 	fmt.Printf("Current state: %s\n", currentState.Value)
 	fmt.Printf("Event: %s\n", event.Type)
 	fmt.Printf("Next state: %s\n", nextState.Value)

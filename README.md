@@ -1,6 +1,13 @@
 # go-example
 
-This repository demonstrates how to implement and use Stately.ai state machines in Go. It features a simple traffic light state machine example that showcases finite states, entry/exit actions, and transitions. This serves as a starting point for developers looking to integrate Stately.ai state machines into their Go projects. More advanced examples are coming in the future, and contributions are welcome to help expand the functionality and showcase additional state machine/statechart features in Go.
+This repository demonstrates how to implement and use Stately.ai state machines in Go. It features a simple traffic light state machine example that showcases:
+
+- finite states
+- transitions & transition actions
+- guarded transitions
+- entry, exit, and transition actions
+
+This serves as a starting point for developers looking to integrate Stately.ai state machines into their Go projects. More advanced examples are coming in the future, and contributions are welcome to help expand the functionality and showcase additional state machine/statechart features in Go.
 
 ## Running the Example
 
