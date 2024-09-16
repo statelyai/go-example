@@ -1,6 +1,6 @@
 # go-example
 
-This repository demonstrates how to implement and use Stately.ai state machines in Go. It features a simple traffic light state machine example that showcases:
+This repository demonstrates how to implement and use [Stately.ai state machines](https://stately.ai/editor) in Go. It features a simple traffic light state machine example that showcases:
 
 - finite states
 - transitions & transition actions
