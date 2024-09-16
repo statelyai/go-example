@@ -22,3 +22,21 @@ To run this example, follow these steps:
 ```bash
 go run main.go
 ```
+
+## Overview
+
+The algorithm for transitioning the state machine in `main.go` can be summarized in the following steps:
+
+1. Check if the current state exists in the state machine definition
+2. Look for a transition matching the given event type in the current state
+3. If a guard is specified for the transition:
+   b. Execute the guard function with the provided parameters
+   c. If the guard returns false, return the current state without transitioning
+4. Determine the next state based on the transition's target
+5. Collect actions to be executed in the following order:
+   a. Exit actions of the current state
+   b. Transition actions
+   c. Entry actions of the next state
+6. Return a tuple of the next state and the collected actions to execute.
+
+This algorithm is implemented in the `TransitionStateMachine` function.
